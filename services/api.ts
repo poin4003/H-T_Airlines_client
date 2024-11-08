@@ -3,7 +3,7 @@ import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios"
 import { Platform } from "react-native";
 import curlirize from 'axios-curlirize'
 
-const url = Platform.OS === "android" ? "https://ticket-booking-backend-2ibf.onrender.com" : "https://ticket-booking-backend-2ibf.onrender.com";
+const url = Platform.OS === "android" ? "https://handtairlines.onrender.com" : "https://handtairlines.onrender.com";
 
 const Api: AxiosInstance = axios.create({ baseURL: url + "/api" });
 

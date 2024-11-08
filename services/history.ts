@@ -5,8 +5,8 @@ async function createOne(ticket_id: number): Promise<HistoryResponse> {
   return Api.post(`/bookings/`, { ticket_id });
 }
 
-async function getAll(): Promise<HistoryListReponse> {
-  return Api.get(`/bookings/`);
+async function getAll(page: number, pageSize: number): Promise<HistoryListReponse> {
+  return Api.get(`/bookings?page=${page}&pageSize=${pageSize}`);
 }
 
 const historyService = {

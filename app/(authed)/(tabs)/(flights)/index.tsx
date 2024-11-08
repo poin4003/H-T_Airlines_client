@@ -19,6 +19,8 @@ export default function FlightScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [visibleTickets, setVisibleTickets] = useState<number | null>(null);
   const [flights, setFlights] = useState<Flight[]>([]);
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
   function onGoToFlightPage(id: number) {
     router.push(`/(flights)/flight/${id}`); 
@@ -63,7 +65,7 @@ export default function FlightScreen() {
   const fetchFlights = async () => {
     try {
       setIsLoading(true);
-      const response = await flightService.getAll();
+      const response = await flightService.getAll(page, limit);
       if (response) {
         setFlights(response?.data || []);
       }
@@ -74,7 +76,7 @@ export default function FlightScreen() {
     }
   };
 
-  useFocusEffect(useCallback(() => { fetchFlights(); }, []));
+  useFocusEffect(useCallback(() => { fetchFlights(); }, [page]));
 
   useEffect(() => {
     navigation.setOptions({
@@ -83,7 +85,8 @@ export default function FlightScreen() {
     });
   }, [navigation, user]);
 
-
+  const handleNextPage = () => setPage((prevPage) => prevPage + 1)
+  const handlePrevPage = () => setPage((prevPage) => Math.max(prevPage - 1, 1));
 
   const renderList = (flight: Flight) => { 
     const isOpen = visibleTickets === flight.ID;
@@ -246,6 +249,15 @@ export default function FlightScreen() {
       </HStack>
       <ScrollView>
         {flights.map((flight) => renderList(flight))}
+        <HStack>
+          <TouchableOpacity onPress={handlePrevPage} disabled={page === 1}>
+            <Text>Previous </Text>
+          </TouchableOpacity>
+          <Text>{page}</Text>
+          <TouchableOpacity onPress={handleNextPage}>
+            <Text> Next</Text>
+          </TouchableOpacity>
+        </HStack>
       </ScrollView>
     </VStack>
   );

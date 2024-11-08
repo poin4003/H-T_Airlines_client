@@ -6,7 +6,7 @@ import { historyService } from "@/services/history";
 import { VStack } from "@/components/VStack";
 import { HStack } from "@/components/HStack";
 import { Text } from "@/components/Text";
-import { ScrollView } from "react-native";
+import { ScrollView, TouchableOpacity } from "react-native";
 import { Devider } from "@/components/Devider";
 
 export default function HistoryScreen() {
@@ -14,12 +14,14 @@ export default function HistoryScreen() {
 
   const [ isLoading, setIsLoading ] = useState(false);
   const [ bookingHistories, setBookingHistories ] = useState<History[]>([]);
+  const [ page, setPage ] = useState(1);
+  const limit = 10
 
   async function fetchBookingHistories() {
     try {
       setIsLoading(true);
-      const response = await historyService.getAll();
-      setBookingHistories(response.data);
+      const response = await historyService.getAll(page, limit);
+      setBookingHistories(response.data || []);
       console.log(response.data);
     } catch (error) {
       Alert.alert("Error", "Failed to fetch history");
@@ -33,6 +35,9 @@ export default function HistoryScreen() {
   useEffect(() => {
     navigation.setOptions({ headerTitle: "Histories" });
   }, [navigation]);
+
+  const handleNextPage = () => setPage((prevPage) => prevPage + 1)
+  const handlePrevPage = () => setPage((prevPage) => Math.max(prevPage - 1, 1));
 
   return (
     <VStack flex={1} p={20} pb={0} gap={20}>
@@ -102,6 +107,15 @@ export default function HistoryScreen() {
           </VStack>
         ))}
         <VStack h={20}/>
+        <HStack>
+          <TouchableOpacity onPress={handlePrevPage} disabled={page === 1}>
+            <Text>Previous </Text>
+          </TouchableOpacity>
+          <Text>{page}</Text>
+          <TouchableOpacity onPress={handleNextPage}>
+            <Text> Next</Text>
+          </TouchableOpacity>
+        </HStack>
       </ScrollView>
     </VStack>
   );

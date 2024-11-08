@@ -5,8 +5,8 @@ async function getOne(id: number): Promise<FlightResponse> {
   return Api.get(`/flights/${id}`);
 }
 
-async function getAll(): Promise<FlightListReponse> {
-  return Api.get('/flights');
+async function getAll(page: number, limit: number): Promise<FlightListReponse> {
+  return Api.get(`/flights?page=${page}&limit=${limit}`);
 }
 
 async function createOne(  
