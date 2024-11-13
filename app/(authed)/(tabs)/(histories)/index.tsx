@@ -22,7 +22,6 @@ export default function HistoryScreen() {
       setIsLoading(true);
       const response = await historyService.getAll(page, limit);
       setBookingHistories(response.data || []);
-      console.log(response.data);
     } catch (error) {
       Alert.alert("Error", "Failed to fetch history");
     } finally {
@@ -30,14 +29,18 @@ export default function HistoryScreen() {
     }
   }
 
-  useFocusEffect(useCallback(() => { fetchBookingHistories(); }, []));
+  useFocusEffect(useCallback(() => { fetchBookingHistories(); }, [page]));
 
   useEffect(() => {
     navigation.setOptions({ headerTitle: "Histories" });
   }, [navigation]);
 
-  const handleNextPage = () => setPage((prevPage) => prevPage + 1)
-  const handlePrevPage = () => setPage((prevPage) => Math.max(prevPage - 1, 1));
+  const handleNextPage = () => {
+    setPage((prevPage) => prevPage + 1)
+  }
+  const handlePrevPage = () => {
+    setPage((prevPage) => Math.max(prevPage - 1, 1));
+  }
 
   return (
     <VStack flex={1} p={20} pb={0} gap={20}>
