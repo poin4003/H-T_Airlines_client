@@ -23,7 +23,7 @@ export default function FlightScreen() {
   const limit = 10;
 
   function onGoToFlightPage(id: number) {
-    router.push(`/(flights)/flight/${id}`); 
+    router.push(`/(flights)/flight/${id}`);
   }
 
   function onGoToCreateTicket(flight_id: number) {
@@ -34,7 +34,27 @@ export default function FlightScreen() {
     router.push(`/(flights)/ticket/${id}`);
   }
 
+  // async function buyTicket(ticketId: number) {
+  //   try {
+  //     await historyService.createOne(ticketId);
+  //     Alert.alert("Success", "Success to buy ticket");
+  //     fetchFlights();
+  //   } catch (error) {
+  //     Alert.alert("Error", "Failed to buy ticket");
+  //   }
+  // }
+
   async function buyTicket(ticketId: number) {
+    const flight = flights.find((flight) => flight.ID === ticketId);
+    if (!flight) {
+      Alert.alert("Error", "Flight not found");
+      return;
+    }
+    const ticket = flight.ticket && flight.ticket[0]; // assuming ticket is the first element in the array
+    if (!ticket || ticket.available_seat === 0) {
+      Alert.alert("Error", "Không còn ghế để mua");
+      return;
+    }
     try {
       await historyService.createOne(ticketId);
       Alert.alert("Success", "Success to buy ticket");
@@ -44,14 +64,37 @@ export default function FlightScreen() {
     }
   }
 
+  // const conformBuyTicket = (ticketId: number) => {
+  //   Alert.alert(
+  //     "Confirm Purchase",
+  //     "Are you sure you want to buy this ticket?",
+  //     [
+  //       {
+  //         text: "Cancel",
+  //         style: "cancel"
+  //       },
+  //       {
+  //         text: "OK",
+  //         onPress: () => buyTicket(ticketId),
+  //       },
+  //     ],
+  //     { cancelable: false }
+  //   );
+  // };
   const conformBuyTicket = (ticketId: number) => {
+    const ticket = flights.find((flight) => flight.ID === ticketId)
+      ?.ticket?.[0];
+    if (!ticket || ticket.available_seat === 0) {
+      Alert.alert("Error", "There is no available seat");
+      return;
+    }
     Alert.alert(
       "Confirm Purchase",
       "Are you sure you want to buy this ticket?",
       [
         {
           text: "Cancel",
-          style: "cancel"
+          style: "cancel",
         },
         {
           text: "OK",
@@ -76,7 +119,11 @@ export default function FlightScreen() {
     }
   };
 
-  useFocusEffect(useCallback(() => { fetchFlights(); }, [page]));
+  useFocusEffect(
+    useCallback(() => {
+      fetchFlights();
+    }, [page])
+  );
 
   useEffect(() => {
     navigation.setOptions({
@@ -85,10 +132,10 @@ export default function FlightScreen() {
     });
   }, [navigation, user]);
 
-  const handleNextPage = () => setPage((prevPage) => prevPage + 1)
+  const handleNextPage = () => setPage((prevPage) => prevPage + 1);
   const handlePrevPage = () => setPage((prevPage) => Math.max(prevPage - 1, 1));
 
-  const renderList = (flight: Flight) => { 
+  const renderList = (flight: Flight) => {
     const isOpen = visibleTickets === flight.ID;
 
     const toggleTickets = () => {
@@ -101,15 +148,15 @@ export default function FlightScreen() {
         gap={20}
         p={20}
         style={{
-          backgroundColor: 'white',
+          backgroundColor: "white",
           borderRadius: 20,
           marginTop: 15,
         }}
       >
-        <TouchableOpacity onPress={
-          () => {
-            user?.role === UserRole.Manager ? onGoToFlightPage(flight?.ID) : ""}
-          }
+        <TouchableOpacity
+          onPress={() => {
+            user?.role === UserRole.Manager ? onGoToFlightPage(flight?.ID) : "";
+          }}
         >
           <HStack alignItems="center" justifyContent="space-between">
             <HStack alignItems="center">
@@ -117,135 +164,185 @@ export default function FlightScreen() {
               <Text fontSize={26}> | </Text>
               <Text fontSize={26}>{flight?.aircraft_type}</Text>
             </HStack>
-            {user?.role === UserRole.Manager && <TabBarIcon size={24} name="chevron-forward" />}
+            {user?.role === UserRole.Manager && (
+              <TabBarIcon size={24} name="chevron-forward" />
+            )}
           </HStack>
         </TouchableOpacity>
 
         <Devider />
 
         <HStack justifyContent="space-between">
-          <Text bold fontSize={16}>Departure: {flight?.departure_airport}</Text>
-          <Text bold fontSize={16}>Arrival: {flight?.arrival_airport}</Text>
+          <Text bold fontSize={16}>
+            Departure: {flight?.departure_airport}
+          </Text>
+          <Text bold fontSize={16}>
+            Arrival: {flight?.arrival_airport}
+          </Text>
         </HStack>
 
-        <Text fontSize={14} color='gray'>Departure time: {flight?.departure_time}</Text>
-        <Text fontSize={14} color='gray'>Arrival time: {flight?.arrival_time}</Text>
+        <Text fontSize={14} color="gray">
+          Departure time: {flight?.departure_time}
+        </Text>
+        <Text fontSize={14} color="gray">
+          Arrival time: {flight?.arrival_time}
+        </Text>
 
         <Devider />
 
         {user?.role === UserRole.Manager ? (
           <HStack justifyContent="space-between">
-            <TabBarIcon size={32} name="add-circle-outline" onPress={() => onGoToCreateTicket(flight.ID)}/>
-            <TouchableOpacity onPress={toggleTickets} style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TabBarIcon
+              size={32}
+              name="add-circle-outline"
+              onPress={() => onGoToCreateTicket(flight.ID)}
+            />
+            <TouchableOpacity
+              onPress={toggleTickets}
+              style={{ flexDirection: "row", alignItems: "center" }}
+            >
               <Text color="black" fontSize={14} bold>
-                {isOpen ? 'Hide Tickets' : 'Show Tickets'}
+                {isOpen ? "Hide Tickets" : "Show Tickets"}
               </Text>
-              <TabBarIcon size={16} name={isOpen ? "chevron-up" : "chevron-down"} style={{ marginLeft: 5 }} />
+              <TabBarIcon
+                size={16}
+                name={isOpen ? "chevron-up" : "chevron-down"}
+                style={{ marginLeft: 5 }}
+              />
             </TouchableOpacity>
           </HStack>
-          ) : (
+        ) : (
           <HStack justifyContent="flex-end">
-            <TouchableOpacity onPress={toggleTickets} style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity
+              onPress={toggleTickets}
+              style={{ flexDirection: "row", alignItems: "center" }}
+            >
               <Text color="black" fontSize={14} bold>
-                {isOpen ? 'Hide Tickets' : 'Show Tickets'}
+                {isOpen ? "Hide Tickets" : "Show Tickets"}
               </Text>
-              <TabBarIcon size={16} name={isOpen ? "chevron-up" : "chevron-down"} style={{ marginLeft: 5 }} />
+              <TabBarIcon
+                size={16}
+                name={isOpen ? "chevron-up" : "chevron-down"}
+                style={{ marginLeft: 5 }}
+              />
             </TouchableOpacity>
           </HStack>
-          )
-        }
+        )}
 
         {isOpen && (
           <VStack p={10}>
-            {flight.ticket && flight.ticket.map(ticket => (
-              <VStack gap={20} h={120} style={{ marginBottom: 15 }} key={ticket?.ID}>
-                <HStack>
-                  <TouchableOpacity
-                    activeOpacity={1}
-                    onPress={() => {
-                      if (user?.role === UserRole.Manager) {
-                        if (ticket?.ID) {
-                          onGotoTicketPage(ticket?.ID);
+            {flight.ticket &&
+              flight.ticket.map((ticket) => (
+                <VStack
+                  gap={20}
+                  h={120}
+                  style={{ marginBottom: 15 }}
+                  key={ticket?.ID}
+                >
+                  <HStack>
+                    <TouchableOpacity
+                      activeOpacity={1}
+                      onPress={() => {
+                        if (user?.role === UserRole.Manager) {
+                          if (ticket?.ID) {
+                            onGotoTicketPage(ticket?.ID);
+                          }
+                        } else {
+                          Alert.alert(
+                            "Description",
+                            ticket?.description || "No description available"
+                          );
                         }
-                      } else {
-                        Alert.alert("Description", ticket?.description || "No description available");
-                      }
-                    }}
-                    style={{
-                      height: 120,
-                      width: "69%",
-                      padding: 20,
-                      justifyContent: "space-between",
-                      backgroundColor: "white",
-                      borderTopLeftRadius: 20,
-                      borderBottomLeftRadius: 20,
-                      borderTopRightRadius: 5,
-                      borderBottomRightRadius: 5,
-                      borderColor: "black",
-                      borderWidth: 1,
-                    }}
-                  > 
-                    <HStack alignItems="center">
-                      <Text fontSize={20} bold>{ticket?.ticket_type}</Text>
-                      <Text fontSize={20} bold>|</Text>
-                      <Text fontSize={16} bold>${ticket?.price}</Text>
-                    </HStack>
-                    <Text fontSize={12}>Available seat: {ticket?.available_seat}</Text>
-                   
-                  </TouchableOpacity>
+                      }}
+                      style={{
+                        height: 120,
+                        width: "69%",
+                        padding: 20,
+                        justifyContent: "space-between",
+                        backgroundColor: "white",
+                        borderTopLeftRadius: 20,
+                        borderBottomLeftRadius: 20,
+                        borderTopRightRadius: 5,
+                        borderBottomRightRadius: 5,
+                        borderColor: "black",
+                        borderWidth: 1,
+                      }}
+                    >
+                      <HStack alignItems="center">
+                        <Text fontSize={20} bold>
+                          {ticket?.ticket_type}
+                        </Text>
+                        <Text fontSize={20} bold>
+                          |
+                        </Text>
+                        <Text fontSize={16} bold>
+                          ${ticket?.price}
+                        </Text>
+                      </HStack>
+                      <Text fontSize={12}>
+                        Available seat: {ticket?.available_seat}
+                      </Text>
+                    </TouchableOpacity>
 
-                  <VStack
-                    h={110}
-                    w={"1%"}
-                    style={{
-                      alignSelf: "center",
-                      borderColor: "lightgray",
-                      borderWidth: 2,
-                      borderStyle: 'dashed',
-                    }}
-                  />
-              
-                  <TouchableOpacity
-                    onPress={() => {
-                      if (ticket?.ID !== undefined) {
-                        conformBuyTicket(ticket?.ID);
-                      } else {
-                        Alert.alert("Error", "Ticket ID is not available");
-                      }
-                    }}
-                    style={{
-                      height: 120,
-                      width: "29%",
-                      backgroundColor: "black",
-                      borderTopRightRadius: 20,
-                      borderBottomRightRadius: 20,
-                      borderTopLeftRadius: 5,
-                      borderBottomLeftRadius: 5,
-                      borderColor: "black",
-                      borderWidth: 1,
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                  <Text style={{ color: "white", fontSize: 17, fontWeight: "bold" }}>Buy now</Text>
-                </TouchableOpacity>
- 
-                </HStack>
-              </VStack>
+                    <VStack
+                      h={110}
+                      w={"1%"}
+                      style={{
+                        alignSelf: "center",
+                        borderColor: "lightgray",
+                        borderWidth: 2,
+                        borderStyle: "dashed",
+                      }}
+                    />
+
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (ticket?.ID !== undefined) {
+                          conformBuyTicket(ticket?.ID);
+                        } else {
+                          Alert.alert("Error", "Ticket ID is not available");
+                        }
+                      }}
+                      style={{
+                        height: 120,
+                        width: "29%",
+                        backgroundColor: "black",
+                        borderTopRightRadius: 20,
+                        borderBottomRightRadius: 20,
+                        borderTopLeftRadius: 5,
+                        borderBottomLeftRadius: 5,
+                        borderColor: "black",
+                        borderWidth: 1,
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "white",
+                          fontSize: 17,
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Buy now
+                      </Text>
+                    </TouchableOpacity>
+                  </HStack>
+                </VStack>
               ))}
-            {flight.ticket.length === 0 && (
-              <Text>No tickets available</Text>
-            )}
+            {flight.ticket.length === 0 && <Text>No tickets available</Text>}
           </VStack>
         )}
-      </VStack> 
+      </VStack>
     );
   };
 
   return (
     <VStack flex={1} p={20} pb={0} gap={20}>
       <HStack alignItems="center" justifyContent="space-between">
-        <Text fontSize={18} bold>{flights.length} Flights</Text>
+        <Text fontSize={18} bold>
+          {flights.length} Flights
+        </Text>
       </HStack>
       <ScrollView>
         {flights.map((flight) => renderList(flight))}
@@ -265,6 +362,10 @@ export default function FlightScreen() {
 
 const headerRight = () => {
   return (
-    <TabBarIcon size={32} name="add-circle-outline" onPress={() => router.push('/(flights)/newFlight')} />
+    <TabBarIcon
+      size={32}
+      name="add-circle-outline"
+      onPress={() => router.push("/(flights)/newFlight")}
+    />
   );
-}
+};
