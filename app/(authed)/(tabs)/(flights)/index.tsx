@@ -11,10 +11,15 @@ import { HStack } from "@/components/HStack";
 import { Text } from "@/components/Text";
 import { Devider } from "@/components/Devider";
 import { historyService } from "@/services/history";
+import { ticketService } from "@/services/ticket";
+import { Ticket } from "@/types/ticket";
+
 
 export default function FlightScreen() {
   const { user } = useAuth();
   const navigation = useNavigation();
+  
+  const [ticketData, setTicketData] = useState<Ticket | undefined>(undefined);
 
   const [isLoading, setIsLoading] = useState(false);
   const [visibleTickets, setVisibleTickets] = useState<number | null>(null);
@@ -34,27 +39,17 @@ export default function FlightScreen() {
     router.push(`/(flights)/ticket/${id}`);
   }
 
-  // async function buyTicket(ticketId: number) {
-  //   try {
-  //     await historyService.createOne(ticketId);
-  //     Alert.alert("Success", "Success to buy ticket");
-  //     fetchFlights();
-  //   } catch (error) {
-  //     Alert.alert("Error", "Failed to buy ticket");
-  //   }
-  // }
 
+  const fetchTicket = async (id: number) => {
+    try {
+      const response = await ticketService.getOne(id);
+      setTicketData(response?.data?.ticket);
+    } catch (error) {
+      router.back();
+    }
+  };
+  
   async function buyTicket(ticketId: number) {
-    const flight = flights.find((flight) => flight.ID === ticketId);
-    if (!flight) {
-      Alert.alert("Error", "Flight not found");
-      return;
-    }
-    const ticket = flight.ticket && flight.ticket[0]; // assuming ticket is the first element in the array
-    if (!ticket || ticket.available_seat === 0) {
-      Alert.alert("Error", "Không còn ghế để mua");
-      return;
-    }
     try {
       await historyService.createOne(ticketId);
       Alert.alert("Success", "Success to buy ticket");
@@ -63,47 +58,43 @@ export default function FlightScreen() {
       Alert.alert("Error", "Failed to buy ticket");
     }
   }
+  
+const isTicketAvailable = async (ticketId: number) => {
+  try {
+    const response = await ticketService.getOne(ticketId);
+    const ticket = response?.data?.ticket;
+    return ticket && ticket.available_seat > 0;
+  } catch (error) {
+    Alert.alert("Error", "There is no available ticket");
+    return false;
+  }
+};
 
-  // const conformBuyTicket = (ticketId: number) => {
-  //   Alert.alert(
-  //     "Confirm Purchase",
-  //     "Are you sure you want to buy this ticket?",
-  //     [
-  //       {
-  //         text: "Cancel",
-  //         style: "cancel"
-  //       },
-  //       {
-  //         text: "OK",
-  //         onPress: () => buyTicket(ticketId),
-  //       },
-  //     ],
-  //     { cancelable: false }
-  //   );
-  // };
-  const conformBuyTicket = (ticketId: number) => {
-    const ticket = flights.find((flight) => flight.ID === ticketId)
-      ?.ticket?.[0];
-    if (!ticket || ticket.available_seat === 0) {
-      Alert.alert("Error", "There is no available seat");
-      return;
-    }
-    Alert.alert(
-      "Confirm Purchase",
-      "Are you sure you want to buy this ticket?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "OK",
-          onPress: () => buyTicket(ticketId),
-        },
-      ],
-      { cancelable: false }
-    );
-  };
+const conformBuyTicket = async (ticketId: number) => {
+  const isAvailable = await isTicketAvailable(ticketId);
+  
+  if (!isAvailable) {
+    Alert.alert("No Available", "There is no available ticket");
+    return;
+  }
+  
+  Alert.alert(
+    "Confirm Purchase",
+    "Are you sure you want to buy this ticket?",
+    [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "OK",
+        onPress: () => buyTicket(ticketId),
+      },
+    ],
+    { cancelable: false }
+  );
+};
+
 
   const fetchFlights = async () => {
     try {
